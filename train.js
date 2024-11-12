@@ -8,18 +8,15 @@ const output = [];
 function loadCSVData() {
   let index = 0;
   return new Promise((resolve, reject) => {
-    fs.createReadStream("./data/data.csv")
+    fs.createReadStream("./data/nuevaData.csv")
       .pipe(csv({ separator: ";" }))
       .on("data", (row) => {
         input[index] = [
+          Number(row.hora),
           Number(row.precipitacion),
           Number(row.temperatura),
-          Number(row.irradiancia),
-          Number(row.area),
-          Number(row.alfa),
-          Number(row.numeroDePaneles),
         ];
-        output[index] = Number(row.potencia);
+        output[index] = [Number(row.irradiancia)];
         index++;
       })
       .on("end", async () => {
@@ -31,46 +28,50 @@ function loadCSVData() {
   });
 }
 
-async function predict(prec, temp, irr, numPaneles) {
+async function predict(data) {
   await loadCSVData();
 
+  const inputArray = data.map((data) => [
+    data.hora,
+    data.precipitacion,
+    data.temperatura,
+  ]);
+
   const xs = tf.tensor2d(input);
-  const ys = tf.tensor2d(output, [output.length, 1]);
-  const fixArea = 150.47;
-  const fixAlfa = -0.0035;
+  // const ys = tf.tensor2d(output, [output.length, 1]);
+  const ys = tf.tensor2d(output);
 
   // Define el modelo
   const model = tf.sequential();
-  model.add(
-    tf.layers.dense({ units: 64, inputShape: [6], activation: "relu" })
-  ); // 64 neuronas en la capa oculta
-  model.add(tf.layers.dense({ units: 32, activation: "relu" })); // Segunda capa oculta con 32 neuronas
-  model.add(tf.layers.dense({ units: 1 })); // Capa de salida para la estimación de potencia
 
-  // Compila el modelo con la función de pérdida y el optimizador
+  // Capa oculta con menor cantidad de neuronas
+  model.add(
+    tf.layers.dense({ units: 32, activation: "relu", inputShape: [3] })
+  );
+
+  // Capa de salida
+  model.add(tf.layers.dense({ units: 1, activation: "linear" }));
+
+  // Compilación del modelo con una tasa de aprendizaje mayor para acelerar el entrenamiento
+  const learningRate = 0.01; // tasa de aprendizaje más alta
+  const optimizer = tf.train.adam(learningRate);
   model.compile({
+    optimizer: optimizer,
     loss: "meanSquaredError",
-    optimizer: tf.train.adam(0.001), // Reducir la tasa de aprendizaje
   });
 
-  // Entrena el modelo
   await model.fit(xs, ys, {
-    epochs: 50,
+    epochs: 100, // Aumenta las épocas si los resultados siguen siendo imprecisos
     batchSize: 32,
-    validationSplit: 0.2,
+    validationSplit: 0.2, // Usa un 20% para validación
   });
 
   xs.dispose();
   ys.dispose();
 
-  // Ejemplo de predicción
-  // precipitacion, temperatura, irradiancia, area, alfa, numero de paneles.
-  // const sampleInput = tf.tensor2d([[0.07, 22, 20, fixArea, fixAlfa, 2]]);
-  const sampleInput = tf.tensor2d([
-    [prec, temp, irr, fixArea, fixAlfa, numPaneles],
-  ]);
+  const sampleInput = tf.tensor2d(inputArray);
   const prediction = model.predict(sampleInput);
-  return prediction.dataSync()[0];
+  return prediction.arraySync().flat();
 }
 
 module.exports = predict;

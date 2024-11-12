@@ -15,19 +15,12 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 app.post("/predict", async (req, res) => {
-  const { precipitacion, temperatura, irradiancia, cantidad_paneles } =
-    req.body;
-
   try {
-    const result = await predict(
-      Number(precipitacion),
-      Number(temperatura),
-      Number(irradiancia),
-      Number(cantidad_paneles)
-    );
+    const result = await predict(req.body);
     console.log("result: ", result);
     return res.status(202).send({ status: "done", result });
   } catch (e) {
+    console.log(e);
     return res.status(500).json({ status: "error", message: e });
   }
 });
