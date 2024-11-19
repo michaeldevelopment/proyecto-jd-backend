@@ -4,6 +4,10 @@ const cors = require("cors");
 const predict = require("./train");
 const splitIntoChunks = require("./utils/splitIntoChunks");
 const { default: axios } = require("axios");
+require("dotenv").config();
+
+const PORT = process.env.PORT || 5000;
+const API_KEY = process.env.API_KEY;
 
 const app = express();
 
@@ -27,7 +31,7 @@ app.post("/predict", async (req, res) => {
     const {
       data: { data },
     } = await axios.get(
-      `https://api.weatherbit.io/v2.0/forecast/hourly?lat=7.8891&lon=-72.4967&key=a4397c2ccdf84bda84e4b79e50d5ef83&hours=${req.body.horas}`
+      `https://api.weatherbit.io/v2.0/forecast/hourly?lat=7.8891&lon=-72.4967&key=${API_KEY}&hours=${req.body.horas}`
     );
 
     const primerDia = String(data[0].timestamp_local);
@@ -73,7 +77,6 @@ app.post("/predict", async (req, res) => {
   }
 });
 
-const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
