@@ -26,6 +26,10 @@ const isBetween = (x, min, max) => {
   return x >= min && x <= max;
 };
 
+app.get("/", (req, res) => {
+  res.send("Test API GET server response");
+});
+
 app.post("/predict", async (req, res) => {
   try {
     const {
