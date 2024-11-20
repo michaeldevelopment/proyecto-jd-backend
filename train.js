@@ -38,7 +38,6 @@ async function predict(data) {
   ]);
 
   const xs = tf.tensor2d(input);
-  // const ys = tf.tensor2d(output, [output.length, 1]);
   const ys = tf.tensor2d(output);
 
   // Define el modelo
@@ -46,7 +45,7 @@ async function predict(data) {
 
   // Capa oculta con menor cantidad de neuronas
   model.add(
-    tf.layers.dense({ units: 32, activation: "relu", inputShape: [3] })
+    tf.layers.dense({ units: 16, activation: "relu", inputShape: [3] })
   );
 
   // Capa de salida
@@ -61,7 +60,7 @@ async function predict(data) {
   });
 
   await model.fit(xs, ys, {
-    epochs: 100, // Aumenta las épocas si los resultados siguen siendo imprecisos
+    epochs: 40, // Aumenta las épocas si los resultados siguen siendo imprecisos
     batchSize: 32,
     validationSplit: 0.2, // Usa un 20% para validación
   });
