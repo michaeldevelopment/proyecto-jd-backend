@@ -60,7 +60,7 @@ async function predict(data) {
   });
 
   await model.fit(xs, ys, {
-    epochs: 40, // Aumenta las épocas si los resultados siguen siendo imprecisos
+    epochs: 20, // Aumenta las épocas si los resultados siguen siendo imprecisos
     batchSize: 32,
     validationSplit: 0.2, // Usa un 20% para validación
   });
